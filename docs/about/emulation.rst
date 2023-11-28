@@ -176,6 +176,9 @@ for that architecture.
   * - MIPS
     - System
     - Unified Hosting Interface (MD01069)
+  * - MSP430
+    - System
+    - https://web.archive.org/web/20210114140625/https://processors.wiki.ti.com/index.php/CIO_System_Call_Protocol
   * - RISC-V
     - System and User-mode
     - https://github.com/riscv/riscv-semihosting-spec/blob/main/riscv-semihosting-spec.adoc
