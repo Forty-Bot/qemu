@@ -1,0 +1,7 @@
+config MSP430_MCU
+    bool
+    select UNIMP
+
+config LAUNCHPAD
+    bool
+    select MSP430_MCU
