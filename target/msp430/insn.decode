@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2023 Sean Anderson <seanga2@gmail.com>
+#
+# MSP430 instruction decode definitions
+
+@f1        .... rs:4 ad:1 bw:1 as:2  rd:4
+@f2        ...... ...     bw:1 asd:2 rsd:4
+@f2_w      ...... ...     .    asd:2 rsd:4
+
+# Format-I (double operand) instructions
+MOV       0100 .... .... ....  @f1
+ADD       0101 .... .... ....  @f1
+ADDC      0110 .... .... ....  @f1
+SUBC      0111 .... .... ....  @f1
+SUB       1000 .... .... ....  @f1
+CMP       1001 .... .... ....  @f1
+DADD      1010 .... .... ....  @f1
+BIT       1011 .... .... ....  @f1
+# Avoid (un)packing SR for some common cases
+{
+  CLRC  1100 0011 0001 0010  # BIC #1, SR
+  CLRZ  1100 0011 0010 0010  # BIC #2, SR
+  CLRN  1100 0010 0010 0010  # BIC #4, SR
+  DINT  1100 0010 0011 0010  # BIC #8, SR
+  BIC   1100 .... .... ....  @f1
+}
+{
+  SETC  1101 0011 0001 0010  # BIS #1, SR
+  SETZ  1101 0011 0010 0010  # BIS #2, SR
+  SETN  1101 0010 0010 0010  # BIS #4, SR
+  EINT  1101 0010 0011 0010  # BIS #8, SR
+  BIS   1101 .... .... ....  @f1
+}
+XOR       1110 .... .... ....  @f1
+AND       1111 .... .... ....  @f1
+
+# Format-II (single operand) instructions
+RRC       000100 000 . .. .... @f2
+SWPB      000100 001 0 .. .... @f2_w
+RRA       000100 010 . .. .... @f2
+SXT       000100 011 0 .. .... @f2_w
+PUSH      000100 100 . .. .... @f2
+CALL      000100 101 0 .. .... @f2_w
+RETI      000100 110 0 00 0000
+
+# Format-III (jump) instructions
+{
+  JMP   001 111    off:s10
+  Jcond 001 cond:3 off:s10
+}
