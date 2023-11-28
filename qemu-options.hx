@@ -4848,7 +4848,7 @@ SRST
 ERST
 DEF("semihosting", 0, QEMU_OPTION_semihosting,
     "-semihosting    semihosting mode\n",
-    QEMU_ARCH_ARM | QEMU_ARCH_M68K | QEMU_ARCH_XTENSA |
+    QEMU_ARCH_ARM | QEMU_ARCH_M68K | QEMU_ARCH_MSP430 | QEMU_ARCH_XTENSA |
     QEMU_ARCH_MIPS | QEMU_ARCH_RISCV)
 SRST
 ``-semihosting``
