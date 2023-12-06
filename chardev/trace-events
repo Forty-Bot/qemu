@@ -1,5 +1,8 @@
 # See docs/devel/tracing.rst for syntax documentation.
 
+# char-fe.c
+serial_set_params(const char *label, int speed, int data_bits, int parity, int stop_bits) "%s %d-%d-%c-%d"
+
 # wctablet.c
 wct_init(void) ""
 wct_cmd_re(void) ""
