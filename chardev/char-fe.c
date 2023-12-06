@@ -26,9 +26,11 @@
 #include "qapi/error.h"
 #include "qapi/qmp/qerror.h"
 #include "sysemu/replay.h"
+#include "trace.h"
 
 #include "chardev/char-fe.h"
 #include "chardev/char-io.h"
+#include "chardev/char-serial.h"
 #include "chardev-internal.h"
 
 int qemu_chr_fe_write(CharBackend *be, const uint8_t *buf, int len)
@@ -100,6 +102,16 @@ int qemu_chr_fe_ioctl(CharBackend *be, int cmd, void *arg)
 {
     Chardev *s = be->chr;
     int res;
+
+    switch (cmd) {
+    case CHR_IOCTL_SERIAL_SET_PARAMS: {
+        QEMUSerialSetParams *ssp = arg;
+
+        trace_serial_set_params(s ? s->label : "(null)", ssp->speed,
+                                ssp->data_bits, ssp->parity, ssp->stop_bits);
+        break;
+    }
+    }
 
     if (!s || !CHARDEV_GET_CLASS(s)->chr_ioctl || qemu_chr_replay(s)) {
         res = -ENOTSUP;
