@@ -1,2 +1,16 @@
 config MSP430_MCU
     bool
+    depends on MSP430
+    select I2C
+    select MSP430_BASIC_TIMER
+    select MSP430_LCD
+    select MSP430_PORT
+    select MSP430_SFR
+    select MSP430_TIMER
+    select MSP430_USART
+    select MSP430_USCI
+    select OR_IRQ
+    select SERIAL
+    select SPLIT_IRQ
+    select SSI
+    select UNIMP
