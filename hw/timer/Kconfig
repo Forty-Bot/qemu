@@ -39,6 +39,9 @@ config CMSDK_APB_DUALTIMER
     bool
     select PTIMER
 
+config MSP430_TIMER
+    bool
+
 config SH_TIMER
     bool
     select PTIMER
