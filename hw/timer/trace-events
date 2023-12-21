@@ -49,6 +49,10 @@ cmsdk_apb_dualtimer_read(uint64_t offset, uint64_t data, unsigned size) "CMSDK A
 cmsdk_apb_dualtimer_write(uint64_t offset, uint64_t data, unsigned size) "CMSDK APB dualtimer write: offset 0x%" PRIx64 " data 0x%" PRIx64 " size %u"
 cmsdk_apb_dualtimer_reset(void) "CMSDK APB dualtimer: reset"
 
+# msp430_timer.c
+msp430_timer_schedule(int64_t at, int64_t delay, int64_t last_updated) "at %10" PRIi64 " %10" PRIi64 " after %10" PRIi64
+msp430_timer_event(int64_t now, int64_t delay, int64_t last_updated, int64_t actual_cycles, int32_t event_cycles) "at    %10" PRIi64 " %10" PRIi64 " since %10" PRIi64 "%10" PRIi64 " actual %10" PRIi32 " event_cycles"
+
 # npcm7xx_timer.c
 npcm7xx_timer_read(const char *id, uint64_t offset, uint64_t value) " %s offset: 0x%04" PRIx64 " value 0x%08" PRIx64
 npcm7xx_timer_write(const char *id, uint64_t offset, uint64_t value) "%s offset: 0x%04" PRIx64 " value 0x%08" PRIx64
