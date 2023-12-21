@@ -69,6 +69,12 @@ config MSP430_USART
     select SERIAL
     select SSI
 
+config MSP430_USCI
+    bool
+    select I2C
+    select SERIAL
+    select SSI
+
 config SIFIVE_UART
     bool
 
