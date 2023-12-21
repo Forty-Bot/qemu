@@ -3,6 +3,7 @@ msp430_ss.add(when: 'CONFIG_MSP430_MCU', if_true: files(
     'bcm.c',
     'fllp.c',
     'mpy.c',
+    'msp430.c',
 ))
 
 hw_arch += {'msp430': msp430_ss}
