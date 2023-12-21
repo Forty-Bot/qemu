@@ -6,6 +6,7 @@ system_ss.add(when: 'CONFIG_PL061', if_true: files('pl061.c'))
 system_ss.add(when: 'CONFIG_ZAURUS', if_true: files('zaurus.c'))
 
 system_ss.add(when: 'CONFIG_IMX', if_true: files('imx_gpio.c'))
+system_ss.add(when: 'CONFIG_MSP430_PORT', if_true: files('msp430_port.c'))
 system_ss.add(when: 'CONFIG_NPCM7XX', if_true: files('npcm7xx_gpio.c'))
 system_ss.add(when: 'CONFIG_NRF51_SOC', if_true: files('nrf51_gpio.c'))
 system_ss.add(when: 'CONFIG_OMAP', if_true: files('omap_gpio.c'))
