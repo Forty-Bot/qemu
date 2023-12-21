@@ -14,6 +14,9 @@ config GPIO_MPC8XXX
 config GPIO_PWR
     bool
 
+config MSP430_PORT
+    bool
+
 config SIFIVE_GPIO
     bool
 
