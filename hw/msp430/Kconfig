@@ -1,2 +1,14 @@
 config MSP430_MCU
     bool
+    select MSP430_PORT
+    select MSP430_SFR
+    select MSP430_TIMER
+    select MSP430_USCI
+    select OR_IRQ
+    select SPLIT_IRQ
+    select UNIMP
+
+config LAUNCHPAD
+    bool
+    select LED
+    select MSP430_MCU

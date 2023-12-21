@@ -171,6 +171,9 @@ typedef struct mips_elf_abiflags_v0 {
 
 #define EM_H8_300H          47  /* Hitachi H8/300H */
 #define EM_H8S              48  /* Hitachi H8S     */
+
+#define EM_MSP430           105 /* Texas Instruments msp430 */
+
 #define EM_LATTICEMICO32    138 /* LatticeMico32 */
 
 #define EM_OPENRISC         92  /* OpenCores OpenRISC */
