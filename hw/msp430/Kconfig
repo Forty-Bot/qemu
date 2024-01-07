@@ -16,3 +16,8 @@ config MSP430_MCU
     select SPLIT_IRQ
     select SSI
     select UNIMP
+
+config VIRT
+    bool
+    depends on MSP430_MCU
+    select LED
