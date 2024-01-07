@@ -1,3 +1,5 @@
 # Default configuration for msp430-softmmu
+CONFIG_GPIO_SPEAKER=y
 CONFIG_LAUNCHPAD=y
 CONFIG_MSP430_MCU=y
+CONFIG_SOFTBAUGH=y
