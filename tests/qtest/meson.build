@@ -157,6 +157,7 @@ qtests_mips64 = qtests_mips
 qtests_mips64el = qtests_mips
 
 qtests_msp430 = [
+    'msp430_lcd',
     'msp430_mpy',
     'msp430_port',
 ]
