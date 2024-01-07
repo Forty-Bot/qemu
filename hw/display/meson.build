@@ -9,6 +9,7 @@ system_ss.add(when: 'CONFIG_FW_CFG_DMA', if_true: files('ramfb-standalone.c'))
 system_ss.add(when: 'CONFIG_VGA_CIRRUS', if_true: files('cirrus_vga.c'))
 system_ss.add(when: ['CONFIG_VGA_CIRRUS', 'CONFIG_VGA_ISA'], if_true: files('cirrus_vga_isa.c'))
 system_ss.add(when: 'CONFIG_G364FB', if_true: files('g364fb.c'))
+system_ss.add(when: 'CONFIG_GPIO_LCD', if_true: files('gpio_lcd.c'))
 system_ss.add(when: 'CONFIG_JAZZ_LED', if_true: files('jazz_led.c'))
 system_ss.add(when: 'CONFIG_PL110', if_true: files('pl110.c'))
 system_ss.add(when: 'CONFIG_SII9022', if_true: files('sii9022.c'))
@@ -119,3 +120,5 @@ system_ss.add(when: 'CONFIG_OMAP', if_true: files('omap_lcdc.c'))
 
 system_ss.add(when: 'CONFIG_ALL', if_true: files('acpi-vga-stub.c'))
 modules += { 'hw-display': hw_display_modules }
+
+subdir('lcdmaps')

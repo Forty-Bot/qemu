@@ -49,6 +49,9 @@ char *qemu_find_file(int type, const char *name)
     case QEMU_FILE_TYPE_KEYMAP:
         subdir = "keymaps/";
         break;
+    case QEMU_FILE_TYPE_LCDMAP:
+        subdir = "lcdmaps/";
+        break;
     default:
         abort();
     }
