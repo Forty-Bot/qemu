@@ -299,6 +299,7 @@ static const FlashPartInfo known_devices[] = {
     { INFO6("s70fs01gs",    0x010221, 0x4d0081, 256 << 10, 512, 0) },
 
     /* SST -- large erase sizes are "overlays", "sectors" are 4<< 10 */
+    { INFO("sst25vf020",  0xbf2543,      0,  32 << 10,   8, ER_4K) },
     { INFO("sst25vf040b", 0xbf258d,      0,  64 << 10,   8, ER_4K) },
     { INFO("sst25vf080b", 0xbf258e,      0,  64 << 10,  16, ER_4K) },
     { INFO("sst25vf016b", 0xbf2541,      0,  64 << 10,  32, ER_4K) },
