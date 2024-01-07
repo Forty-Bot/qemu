@@ -19,3 +19,10 @@ config LAUNCHPAD
     bool
     depends on MSP430_MCU
     select LED
+
+config SOFTBAUGH
+    bool
+    depends on MSP430_MCU
+    select GPIO_LCD
+    select LED
+    select SSI_M25P80
