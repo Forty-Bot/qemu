@@ -3,6 +3,7 @@
 
 #define QEMU_FILE_TYPE_BIOS   0
 #define QEMU_FILE_TYPE_KEYMAP 1
+#define QEMU_FILE_TYPE_LCDMAP 2
 /**
  * qemu_find_file:
  * @type: QEMU_FILE_TYPE_BIOS (for BIOS, VGA BIOS)
