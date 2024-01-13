@@ -34,6 +34,13 @@ static const uint8_t kernel_mcf5208[] = {
     0x60, 0xfa                              /* bra.s  loop */
 };
 
+static uint8_t kernel_msp430[0x4000] = {
+    0xf2, 0x42, 0x62, 0x00,             /* mov.b #8,    &UCA0BR0 */
+    0xf2, 0x40, 0x40, 0x00, 0x61, 0x00, /* mov.b #0x40, &UCA0CTL1 */
+    0xf2, 0x40, 0x54, 0x00, 0x67, 0x00, /* mov.b #'T,   &UCA0TXBUF */
+    0xfc, 0x3f,                         /* jmp loop */
+};
+
 static const uint8_t bios_nextcube[] = {
     0x06, 0x00, 0x00, 0x00,                 /* Initial SP */
     0x01, 0x00, 0x00, 0x08,                 /* Initial PC */
@@ -169,6 +176,7 @@ static const testdef_t tests[] = {
     { "s390x", "s390-ccw-virtio", "", "device" },
     { "m68k", "mcf5208evb", "", "TT", sizeof(kernel_mcf5208), kernel_mcf5208 },
     { "m68k", "next-cube", "", "TT", sizeof(bios_nextcube), 0, bios_nextcube },
+    { "msp430", "msp-exp430g2et", "-m 1", "TT", sizeof(kernel_msp430), kernel_msp430 },
     { "microblaze", "petalogix-s3adsp1800", "", "TT",
       sizeof(kernel_pls3adsp1800), kernel_pls3adsp1800 },
     { "microblazeel", "petalogix-ml605", "", "TT",
@@ -284,6 +292,8 @@ int main(int argc, char *argv[])
 {
     const char *arch = qtest_get_arch();
     int i;
+
+    kernel_msp430[0x3fff] = 0xc0;
 
     g_test_init(&argc, &argv, NULL);
 
