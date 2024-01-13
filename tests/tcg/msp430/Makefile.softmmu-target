@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2024 Sean Anderson <seanga2@gmail.com>
+
+.DELETE_ON_ERROR:
+
+MCU := msp430f1611
+QEMU_OPTS := -M virt,mcu-type=$(MCU) -nographic -semihosting -m 1 -kernel
+
+MAKEFLAGS += -rR
+
+TEST_SRC := $(SRC_PATH)/tests/tcg/msp430
+PRINTFS := printf fprintf dprintf sprintf snprintf
+PRINTFS += $(addprefix v,$(PRINTFS))
+CFLAGS += -Wall -ggdb -Os -mmcu=$(MCU) -ffunction-sections -fdata-sections
+CFLAGS += -Wa,-mY -I$(TEST_SRC) $(addprefix -fno-builtin-,$(PRINTFS))
+LDFLAGS += -Wl,--gc-sections -Wl,--no-warn-rwx-segments
+
+COMMON := bcd.o exit.o printf.o outc.o tap.o
+MSP430_TESTS := add bit dadd jmp nop rot sub bcd_test wdt
+EXTRA_TESTS += $(MSP430_TESTS)
+DEPS := $(addsuffix .d,$(TESTS)) $(COMMON:.o=.d) bcd.d
+DEPS += $(addsuffix .S.d,$(MSP430_TESTS))
+CLEANFILES += $(DEPS) *.var *.S
+VPATH += $(TEST_SRC)
+
+FORCE:
+
+.PRECIOUS: %.var
+%.var: FORCE
+	@echo "$($*)" | cmp -s - "$@" || echo "$($*)" > $@
+
+%.S: %.jinja jpp.py
+	$(call quiet-command,$(TEST_SRC)/jpp.py -MD -MF $@.d -o $@ $<,JINJA,$@)
+
+CC_VARS := CC_VARS.var CFLAGS.var EXTRA_CFLAGS.var
+define run-cc
+	$(call quiet-command,$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -o $@ -c $<,CC,$@)
+endef
+
+%.o: $(SYSTEM_MINILIB_SRC)/%.c
+
+%.o: %.S $(CC_VARS)
+	$(run-cc)
+
+%.o: %.c $(CC_VARS)
+	$(run-cc)
+
+LD_VARS := LD_VARS.var $(CC_VARS) LDFLAGS.var
+%: %.o $(COMMON) $(LD_VARS)
+	$(call quiet-command,$(CC) $(CFLAGS) $(EXTRA_CFLAGS) $(LDFLAGS) -o $@ \
+	                     $(filter-out %.var,$^),LD,$@)
+
+bcd_test: bcd.o
+memory: CFLAGS += -DCHECK_UNALIGNED=0 -DMEM_PAGE_SIZE=1024
+
+run-all: TIMEOUT=2
+run-all: $(MSP430_TESTS)
+	$(call quiet-command,prove -fme 'timeout -s KILL --foreground $(TIMEOUT) \
+		$(QEMU) -monitor none -display none \
+		-chardev file$(COMMA)path=$*.out$(COMMA)id=output $(QEMU_OPTS)' $^, \
+		TEST,$(TARGET_NAME))
+
+EXTRA_RUNS += run-all
+
+-include $(DEPS)

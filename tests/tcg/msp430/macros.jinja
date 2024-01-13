@@ -1,0 +1,560 @@
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2024 Sean Anderson <seanga2@gmail.com>
+
+{% macro set_attrs(mode, direct=False, autoincrement=False) %}
+{% do mode.__setattr__('direct', direct) -%}
+{% do mode.__setattr__('autoincrement', autoincrement) -%}
+{% endmacro %}
+
+{% macro direct(insn) %}
+    mov r4, r12
+    {{ insn }} r12
+{%- endmacro %}
+{{ set_attrs(direct, True) }}
+
+{% macro indexed(insn, base) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_src - {{ base }}
+    mov r4, &test_src
+1:
+    mov #1000, r13
+    {{ insn }} {{ base }}(r13)
+    mov &test_src, r12
+{%- endmacro %}
+{{ set_attrs(indexed) }}
+
+{% macro indirect(insn) %}
+    mov r4, &test_src
+    mov #test_src, r13
+    {{ insn }} @r13
+    mov &test_src, r12
+{%- endmacro %}
+{{ set_attrs(indirect) }}
+
+{% macro autoincrement(insn) %}
+    mov r4, &test_src
+    mov #test_src, r13
+    {{ insn }} @r13+
+    mov &test_src, r12
+{%- endmacro %}
+{{ set_attrs(autoincrement, autoincrement=True) }}
+
+{% macro symbolic(insn) %}
+    mov r4, &test_src
+    {{ insn }} test_src
+    mov &test_src, r12
+{%- endmacro %}
+{{ set_attrs(symbolic) }}
+
+{% macro immediate(insn, arg) %}
+    {{ insn }} #{{ arg }}
+{%- endmacro %}
+{{ set_attrs(immediate) }}
+
+{% macro absolute(insn) %}
+    mov r4, &test_src
+    {{ insn }} &test_src
+    mov &test_src, r12
+{%- endmacro %}
+{{ set_attrs(absolute) }}
+
+; two-operand instructions with direct destinations
+
+{% macro direct_direct(insn) %}
+    mov r5, r12
+    {{ insn }} r4, r12
+{%- endmacro %}
+{{ set_attrs(direct_direct, True) }}
+
+{% macro indexed_direct(insn, base1) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_src - {{ base1 }}
+    mov r4, &test_src
+    mov r5, r12
+1:
+    mov #1000, r13
+    {{ insn }} {{ base1 }}(r13), r12
+{%- endmacro %}
+{{ set_attrs(indexed_direct, True) }}
+
+{% macro indirect_direct(insn) %}
+    mov #test_src, r13
+    mov r4, &test_src
+    mov r5, r12
+    {{ insn }} @r13, r12
+{%- endmacro %}
+{{ set_attrs(indirect_direct, True) }}
+
+{% macro autoincrement_direct(insn) %}
+    mov r4, &test_src
+    mov r5, r12
+    mov #test_src, r13
+    {{ insn }} @r13+, r12
+{%- endmacro %}
+{{ set_attrs(autoincrement_direct, True, True) }}
+
+{% macro symbolic_direct(insn) %}
+    mov r4, &test_src
+    mov r5, r12
+    {{ insn }} test_src, r12
+{%- endmacro %}
+{{ set_attrs(symbolic_direct, True) }}
+
+{% macro immediate_direct(insn, arg1) %}
+    mov r5, r12
+    {{ insn }} #{{ arg1 }}, r12
+{%- endmacro %}
+{{ set_attrs(immediate_direct, True) }}
+
+{% macro absolute_direct(insn) %}
+    mov r4, &test_src
+    mov r5, r12
+    {{ insn }} &test_src, r12
+{%- endmacro %}
+{{ set_attrs(absolute_direct, True) }}
+
+; two-operand instructions with indexed destinations
+
+{% macro direct_indexed(insn, base1) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_dst - {{ base1 }}
+    mov r5, &test_dst
+1:
+    mov #1000, r14
+    {{ insn }} r4, {{ base1 }}(r14)
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(direct_indexed) }}
+
+{% macro indexed_indexed(insn, base1, base2) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_src - {{ base1 }}
+    .reloc 2f + 2, R_MSP430_16_BYTE, test_dst - {{ base2 }}
+    mov r4, &test_src
+    mov r5, &test_dst
+1:
+    mov #1000, r13
+2:
+    mov #1000, r14
+    {{ insn }} {{ base1 }}(r13), {{ base2 }}(r14)
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(indexed_indexed) }}
+
+{% macro indirect_indexed(insn, base1) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_dst - {{ base1 }}
+    mov r4, &test_src
+    mov r5, &test_dst
+    mov #test_src, r13
+1:
+    mov #1000, r14
+    {{ insn }} @r13, {{ base1 }}(r14)
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(indirect_indexed) }}
+
+{% macro autoincrement_indexed(insn, base1) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_dst - {{ base1 }}
+    mov r4, &test_src
+    mov r5, &test_dst
+    mov #test_src, r13
+1:
+    mov #1000, r14
+    {{ insn }} @r13+, {{ base1 }}(r14)
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(autoincrement_indexed) }}
+
+{% macro symbolic_indexed(insn, base1) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_dst - {{ base1 }}
+    mov r4, &test_src
+    mov r5, &test_dst
+1:
+    mov #1000, r14
+    {{ insn }} test_src, {{ base1 }}(r14)
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(symbolic_indexed) }}
+
+{% macro immediate_indexed(insn, arg1, base1) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_dst - {{ base1 }}
+    mov r5, &test_dst
+1:
+    mov #1000, r14
+    {{ insn }} #{{ arg1 }}, {{ base1 }}(r14)
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(immediate_indexed) }}
+
+{% macro absolute_indexed(insn, base1) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_dst - {{ base1 }}
+    mov r4, &test_src
+    mov r5, &test_dst
+1:
+    mov #1000, r14
+    {{ insn }} &test_src, {{ base1 }}(r14)
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(absolute_indexed) }}
+
+; two-operand instructions with symbolic destinations
+
+{% macro direct_symbolic(insn) %}
+    mov r5, &test_dst
+    {{ insn }} r4, test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(direct_symbolic) }}
+
+{% macro indexed_symbolic(insn, base1) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_src - {{ base1 }}
+    mov r4, &test_src
+    mov r5, &test_dst
+1:
+    mov #1000, r13
+    {{ insn }} {{ base1 }}(r13), test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(indexed_symbolic) }}
+
+{% macro indirect_symbolic(insn) %}
+    mov r4, &test_src
+    mov r5, &test_dst
+    mov #test_src, r13
+    {{ insn }} @r13, test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(indirect_symbolic) }}
+
+{% macro autoincrement_symbolic(insn) %}
+    mov r5, &test_dst
+    mov r4, &test_src
+    mov #test_src, r13
+    {{ insn }} @r13+, test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(autoincrement_symbolic, autoincrement=True) }}
+
+{% macro symbolic_symbolic(insn) %}
+    mov r4, &test_src
+    mov r5, &test_dst
+    {{ insn }} test_src, test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(symbolic_symbolic) }}
+
+{% macro immediate_symbolic(insn, arg1) %}
+    mov r5, &test_dst
+    {{ insn }} #{{ arg1 }}, test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(immediate_symbolic) }}
+
+{% macro absolute_symbolic(insn) %}
+    mov r4, &test_src
+    mov r5, &test_dst
+    {{ insn }} &test_src, test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(absolute_symbolic) }}
+
+; two-operand instructions with absolute destinations
+
+{% macro direct_absolute(insn) %}
+    mov r5, &test_dst
+    {{ insn }} r4, &test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(direct_absolute) }}
+
+{% macro indexed_absolute(insn, base1) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_src - {{ base1 }}
+    mov r4, &test_src
+    mov r5, &test_dst
+1:
+    mov #1000, r13
+    {{ insn }} {{ base1 }}(r13), &test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(indexed_absolute) }}
+
+{% macro indirect_absolute(insn) %}
+    mov r5, &test_dst
+    mov r4, &test_src
+    mov #test_src, r13
+    {{ insn }} @r13, &test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(indirect_absolute) }}
+
+{% macro autoincrement_absolute(insn) %}
+    mov r4, &test_src
+    mov r5, &test_dst
+    mov #test_src, r13
+    {{ insn }} @r13+, &test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(autoincrement_absolute, autoincrement=True) }}
+
+{% macro symbolic_absolute(insn) %}
+    mov r5, &test_dst
+    mov r4, &test_src
+    {{ insn }} test_src, &test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(symbolic_absolute) }}
+
+{% macro immediate_absolute(insn, arg1) %}
+    mov r5, &test_dst
+    {{ insn }} #{{ arg1 }}, &test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(immediate_absolute) }}
+
+{% macro absolute_absolute(insn) %}
+    mov r4, &test_src
+    mov r5, &test_dst
+    {{ insn }} &test_src, &test_dst
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(absolute_absolute) }}
+
+; two-operand instructions with the same source/destination
+
+{% macro indexed_direct_same(insn, arg2) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_src - {{ arg2 }}
+    mov r4, &test_src
+    mov r5, r12
+1:
+    {{ insn }} 1000(r12), r12
+{%- endmacro %}
+{{ set_attrs(indexed_direct_same, True) }}
+
+{% macro direct_indexed_same(insn, arg1) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_dst - {{ arg1 }}
+    mov r5, &test_dst
+1:
+    {{ insn }} r4, 1000(r4)
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(direct_indexed_same) }}
+
+{% macro indexed_indexed_same(insn, base1, base2) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_src - {{ base1 }}
+    .reloc 1f + 4, R_MSP430_16_BYTE, test_dst - {{ base1 }}
+    mov r4, &test_src
+    mov r5, &test_dst
+    mov #{{ base1 }}, r13
+1:
+    {{ insn }} 1000(r13), 1000(r13)
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(indexed_indexed_same) }}
+
+{% macro indirect_indexed_same(insn) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_dst - test_src
+    mov r4, &test_src
+    mov r5, &test_dst
+    mov #test_src, r13
+1:
+    {{ insn }} @r13, 1000(r13)
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(indirect_indexed_same) }}
+
+{% macro autoincrement_indexed_same(insn, incr) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_dst - test_src - {{ incr }}
+    mov r4, &test_src
+    mov r5, &test_dst
+    mov #test_src, r13
+1:
+    {{ insn }} @r13+, 1000(r13)
+    mov &test_dst, r12
+{%- endmacro %}
+{{ set_attrs(autoincrement_indexed_same, autoincrement=True) }}
+
+; Test macros
+
+; checks and setups
+
+{% set check_helpers %}
+do_check_incr:
+    mov r2, r11
+    cmp r15, r13
+    jeq 1f
+    jmp 2f
+do_check:
+    mov r2, r11
+1:
+    cmp r7, r11
+    jne 3f
+    cmp r6, r12
+    jne 4f
+    br #pass
+2:
+    push r13
+    push r15
+    push #src_str
+    jmp 5f
+3:
+    push r11
+    push r7
+    push #sr_str
+    jmp 5f
+4:
+    push r12
+    push r6
+    push #res_str
+5:
+    push #err_fmt
+    call #failf
+    add #8, r1
+    ret
+{%- endset %}
+
+{% macro no_setup() %}
+{%- endmacro %}
+
+{% macro setup(exp, sr) %}
+    mov #{{ exp }}, r6
+    mov #{{ sr }}, r7
+{%- endmacro %}
+
+{% macro set_carry() %}
+    setc
+{%- endmacro %}
+
+{% macro clear_carry() %}
+    clrc
+{%- endmacro %}
+
+{% macro setupc(exp, sr, carry) %}
+{{ setup(exp, sr) }}
+{% if carry %}
+    setc
+{%- else %}
+    clrc
+{%- endif %}
+{%- endmacro %}
+
+{% macro setupb(exp_direct, exp_indirect, sr) %}
+    mov #{{ sr }}, r7
+    mov #{{ exp_direct }}, r8
+    mov #{{ exp_indirect }}, r9
+{%- endmacro %}
+
+{% macro check(direct, incr) %}
+{% if incr %}
+    mov #test_src + {{ incr }}, r15
+    call #do_check_incr
+{%- else %}
+    call #do_check
+{%- endif %}
+{%- endmacro %}
+
+{% macro checkb(direct, incr) %}
+{% if direct %}
+    mov r8, r6
+{% else %}
+    mov r9, r6
+{% endif %}
+{{ check(direct, incr) }}
+{%- endmacro %}
+
+; The test macros themselves
+
+{% macro test_mode(mode, insn, check, setup, incr) %}
+; {{ insn }} {{ mode.name }}
+test_{{ test_id() }}:
+{{ setup() }}
+{{ mode(insn, *varargs, **kwargs) }}
+{{ check(mode.direct, incr if mode.autoincrement else 0) }}
+{%- endmacro %}
+
+{% macro test_op1_modes(insn, arg, check, setup=no_setup, incr=2, base=0x1234) %}
+    mov #{{ arg }}, r4
+
+{% for mode in (direct, indexed, indirect, autoincrement, symbolic, absolute) %}
+{% set args = { 'arg': arg, 'base': base, 'regs': regs } %}
+{{ test_mode(mode, insn, check, setup, incr, **(args | selectkeys(mode.arguments))) }}
+{% endfor %}
+{%- endmacro %}
+
+{% macro test_op1_modes_full(insn, arg, check, setup=no_setup, incr=2) %}
+{{ test_mode(immediate, insn, check, setup, incr, arg) }}
+{{ test_op1_modes(insn, arg, check, setup, incr) }}
+{%- endmacro %}
+
+{% macro test_op2_modes(insn, arg1, arg2, check, setup=no_setup, incr=2,
+                        base1=0x1234, base2=0x5678) %}
+    mov #{{ arg1 }}, r4
+    mov #{{ arg2 }}, r5
+{% for mode in (
+    direct_direct, indexed_direct, indirect_direct, autoincrement_direct,
+    symbolic_direct, immediate_direct, absolute_direct,
+    direct_indexed, indexed_indexed, indirect_indexed, autoincrement_indexed,
+    symbolic_indexed, immediate_indexed, absolute_indexed,
+    direct_symbolic, indexed_symbolic, indirect_symbolic,
+    autoincrement_symbolic, symbolic_symbolic, immediate_symbolic,
+    absolute_symbolic,
+    direct_absolute, indexed_absolute, indirect_absolute,
+    autoincrement_absolute, symbolic_absolute, immediate_absolute,
+    absolute_absolute,
+    direct_indexed_same, indexed_direct_same, indexed_indexed_same,
+    indirect_indexed_same, autoincrement_indexed_same,
+) %}
+{% set args = {
+    'arg1': arg1,
+    'arg2': arg2,
+    'base1': base1,
+    'base2': base2,
+    'incr': incr,
+} +%}
+{{ test_mode(mode, insn, check, setup, incr, **(args | selectkeys(mode.arguments))) }}
+{%- endfor %}
+{%- endmacro %}
+
+{% macro test_op1_single(insn, arg, check, setup=no_setup) %}
+; {{ insn }} {{ arg | hex }}
+test_{{ test_id() }}:
+{{ setup(*varargs) }}
+    mov #{{ arg }}, r12
+    {{ insn }} r12
+{{ check(True, 0) }}
+{%- endmacro %}
+
+{% macro test_op2_single(insn, arg1, arg2, check, setup=no_setup) %}
+; {{ insn }} {{ arg1 | hex }}, {{ arg2 | hex }}
+test_{{ test_id() }}:
+{{ setup(*varargs) }}
+    mov #{{ arg2 }}, r12
+    {{ insn }} #{{ arg1 }}, r12
+{{ check(True, 0) }}
+{%- endmacro %}
+
+{% macro main() %}
+.data
+.balign 2
+test_src:
+    .skip 2
+test_dst:
+    .skip 2
+
+.section .rodata
+err_fmt:
+    .asciz "%s: expected 0x%x, got 0x%x\n"
+src_str:
+    .asciz "source address"
+sr_str:
+    .asciz "status register"
+res_str:
+    .asciz "result"
+
+.text
+.global main
+main:
+    mov #1000, r12
+    call #plan
+
+{{ caller() }}
+
+    .reloc main + 2, R_MSP430_16_BYTE, {{ test_id() - 1 }}
+    mov #0, r12
+    call #exit
+{%- endmacro %}
