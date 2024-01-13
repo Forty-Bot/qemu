@@ -20,7 +20,9 @@
 # error "Target does not specify CHECK_UNALIGNED"
 #endif
 
+#ifndef MEM_PAGE_SIZE
 #define MEM_PAGE_SIZE 4096             /* nominal 4k "pages" */
+#endif
 #define TEST_SIZE (MEM_PAGE_SIZE * 4)  /* 4 pages */
 
 #define ARRAY_SIZE(x) ((sizeof(x) / sizeof((x)[0])))
