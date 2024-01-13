@@ -1,0 +1,190 @@
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2024 Sean Anderson <seanga2@gmail.com>
+
+#include <msp430.h>
+
+#include "macros.S"
+
+.macro test_and arg1, arg2, exp, sr
+    test_op2_single and, \arg1, \arg2, check, setup, \exp, \sr
+    test_op2_single and.b, \arg1, \arg2, check, setup, \exp & 0xff, \sr
+    test_op2_single bit, \arg1, \arg2, check, setup, \arg2, \sr
+    test_op2_single bit.b, \arg1, \arg2, check, setup, \arg2, \sr
+.endm
+
+.macro test_andb arg1, arg2, exp, sr
+    test_op2_single and.b, \arg1, \arg2, check, setup, \exp, \sr
+    test_op2_single bit.b, \arg1, \arg2, check, setup, \arg2, \sr
+.endm
+
+.macro test_xor arg1, arg2, exp, sr
+    test_op2_single xor, \arg1, \arg2, check, setup, \exp, \sr
+    test_op2_single xor.b, \arg1, \arg2, check, setup, \exp & 0xff, \sr
+.endm
+
+.macro test_xorb arg1, arg2, exp, sr
+    test_op2_single xor.b, \arg1, \arg2, check, setup, \exp, \sr
+.endm
+
+.macro test_bic arg1, arg2, exp
+    test_op2_single bic, \arg1, \arg2, check, setup, \exp, 0
+    test_op2_single bic.b, \arg1, \arg2, check, setup, \exp & 0xff, 0
+.endm
+
+.macro test_bis arg1, arg2, exp
+    test_op2_single bis, \arg1, \arg2, check, setup, \exp, 0
+    test_op2_single bis.b, \arg1, \arg2, check, setup, \exp & 0xff, 0
+.endm
+
+.global main
+main:
+    mov #502, r12
+    call #plan
+
+    ; SR/CG immediates
+
+    test_and 0, -1, 0, Z
+    test_and 1, -1, 1, C
+    test_and 2, -1, 2, C
+    test_and 4, -1, 4, C
+    test_and 8, -1, 8, C
+    test_and -1, -1, -1, N | C
+
+    test_xor 0, 0, 0, Z
+    test_xor 1, 0, 1, C
+    test_xor 2, 0, 2, C
+    test_xor 4, 0, 4, C
+    test_xor 8, 0, 8, C
+    test_xor -1, 0, -1, N | C
+
+    test_bic 0, -1, -1
+    test_bic 1, -1, -2
+    test_bic 2, -1, -3
+    test_bic 4, -1, -5
+    test_bic 8, -1, -9
+    test_bic -1, -1, 0
+
+    test_bis 0, 0, 0
+    test_bis 1, 0, 1
+    test_bis 2, 0, 2
+    test_bis 4, 0, 4
+    test_bis 8, 0, 8
+    test_bis -1, 0, -1
+
+    ; Bit patterns
+
+    test_and 0x5555, 0x5555, 0x5555, C
+    test_and 0xaaaa, 0xaaaa, 0xaaaa, N | C
+    test_and 0xaaaa, 0x5555, 0x0000, Z
+    test_and 0x0f0f, 0x3333, 0x0303, C
+    test_and 0xf0f0, 0x6666, 0x6060, C
+    test_and 0x0f0f, 0xcccc, 0x0c0c, C
+    test_and 0xf0f0, 0x9999, 0x9090, N | C
+
+    test_xor 0x0000, 0x5555, 0x5555, C
+    test_xor 0xffff, 0xaaaa, 0x5555, V | C
+    test_xor 0x5555, 0x5555, 0x0000, Z
+    test_xor 0xaaaa, 0xaaaa, 0x0000, V | Z
+    test_xor 0xaaaa, 0x5555, 0xffff, N | C
+    test_xor 0x0f0f, 0x3333, 0x3c3c, C
+    test_xor 0xf0f0, 0x6666, 0x9696, N | C
+    test_xor 0x0f0f, 0xcccc, 0xc3c3, N | C
+    test_xor 0xf0f0, 0x9999, 0x6969, V | C
+
+    test_bic 0x5555, 0x5555, 0x0000
+    test_bic 0xaaaa, 0xaaaa, 0x0000
+    test_bic 0xaaaa, 0x5555, 0x5555
+    test_bic 0x0f0f, 0x3333, 0x3030
+    test_bic 0xf0f0, 0x6666, 0x0606
+    test_bic 0x0f0f, 0xcccc, 0xc0c0
+    test_bic 0xf0f0, 0x9999, 0x0909
+
+    test_bis 0x5555, 0x5555, 0x5555
+    test_bis 0xaaaa, 0xaaaa, 0xaaaa
+    test_bis 0xaaaa, 0x5555, 0xffff
+    test_bis 0x0f0f, 0x3333, 0x3f3f
+    test_bis 0xf0f0, 0x6666, 0xf6f6
+    test_bis 0x0f0f, 0xcccc, 0xcfcf
+    test_bis 0xf0f0, 0x9999, 0xf9f9
+
+    ; Differing flags for byte/word
+
+    test_andb 0x55aa, 0x5555, 0x00, Z
+    test_andb 0xaa55, 0xaaaa, 0x00, Z
+    test_andb 0xaa55, 0x5555, 0x55, C
+
+    test_andb 0x5555, 0x55aa, 0x00, Z
+    test_andb 0xaaaa, 0xaa55, 0x00, Z
+    test_andb 0xaaaa, 0x55aa, 0xaa, N | C
+
+    test_andb 0x55aa, 0x55aa, 0xaa, N | C
+    test_andb 0xaa55, 0xaa55, 0x55, C
+    test_andb 0xaa55, 0x55aa, 0x00, Z
+
+    test_xorb 0x5500, 0x5555, 0x55, C
+    test_xorb 0xaa00, 0xaa55, 0x55, C
+    test_xorb 0xaa00, 0x5555, 0x55, C
+    test_xorb 0xff00, 0xaa55, 0x55, C
+
+    test_xorb 0x0055, 0x5555, 0x00, Z
+    test_xorb 0xaa55, 0xaa55, 0x00, Z
+    test_xorb 0xaa55, 0x5555, 0x00, Z
+    test_xorb 0xff55, 0xaa55, 0x00, Z
+
+    test_xorb 0x00aa, 0x5555, 0xff, N | C
+    test_xorb 0x55aa, 0x5555, 0xff, N | C
+    test_xorb 0xaaaa, 0xaa55, 0xff, N | C
+    test_xorb 0xffaa, 0xaa55, 0xff, N | C
+
+    test_xorb 0x00aa, 0x55aa, 0x00, V | Z
+    test_xorb 0x55aa, 0x55aa, 0x00, V | Z
+    test_xorb 0xaaaa, 0x55aa, 0x00, V | Z
+    test_xorb 0xffaa, 0xaaaa, 0x00, V | Z
+
+    test_xorb 0x00ff, 0x55aa, 0x55, V | C
+    test_xorb 0x55ff, 0x55aa, 0x55, V | C
+    test_xorb 0xaaff, 0xaaaa, 0x55, V | C
+    test_xorb 0xaaff, 0x55aa, 0x55, V | C
+
+test_and_modes:
+    setup 0x8841, N | C
+    test_op2_modes and, 0x9c63, 0xaa55, check
+
+test_bit_modes:
+    setup 0xaa55, N | C
+    test_op2_modes bit, 0x9c63, 0xaa55, check
+
+test_xor_modes:
+    setup 0x39c6, V | C
+    test_op2_modes xor, 0x9c63, 0xa5a5, check
+
+test_bic_modes:
+    setup 0x4188, 0
+    test_op2_modes bic, 0x9c63, 0x55aa, check
+
+test_bis_modes:
+    setup 0xbe77, 0
+    test_op2_modes bis, 0x9c63, 0xaa55, check
+
+test_andb_modes:
+    setupb 0x0041, 0xaa41, C
+    test_op2_modes and.b, 0x9c63, 0xaa55, checkb, incr=1
+
+test_bitb_modes:
+    setup 0xaa55, C
+    test_op2_modes bit.b, 0x9c63, 0xaa55, check, incr=1
+
+test_xorb_modes:
+    setupb 0x00c6, 0xa5c6, N | C
+    test_op2_modes xor.b, 0x9c63, 0xa5a5, checkb, incr=1
+
+test_bicb_modes:
+    setupb 0x0088, 0x5588, 0
+    test_op2_modes bic.b, 0x9c63, 0x55aa, checkb, incr=1
+
+test_bisb_modes:
+    setupb 0x0077, 0xaa77, 0
+    test_op2_modes bis.b, 0x9c63, 0xaa55, checkb, incr=1
+
+    mov #0, r12
+    call #exit

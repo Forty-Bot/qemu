@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2024 Sean Anderson <seanga2@gmail.com>
+
+MCU := msp430f1611
+QEMU_OPTS := -M virt,mcu-type=$(MCU) -nographic -semihosting -m 1 -kernel
+
+MAKEFLAGS += -rR
+
+TEST_SRC := $(SRC_PATH)/tests/tcg/msp430
+CFLAGS += -ggdb -Os -mmcu=$(MCU) -ffunction-sections -fdata-sections
+CFLAGS += -Wa,-mY -I$(TEST_SRC)
+LDFLAGS += -Wl,--gc-sections
+
+COMMON := exit.o outc.o tap.o
+MSP430_TESTS := add bit dadd jmp nop rot sub
+TESTS += $(MSP430_TESTS)
+DEPS := $(addsuffix .d,$(TESTS)) $(COMMON:.o=.d)
+CLEANFILES += $(DEPS) *.var
+VPATH += $(TEST_SRC)
+
+FORCE:
+
+.PRECIOUS: %.var
+%.var: FORCE
+	@echo "$($*)" | cmp -s - "$@" || echo "$($*)" > $@
+
+CC_VARS := CC_VARS.var CFLAGS.var EXTRA_CFLAGS.var
+define run-cc
+	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -o $@ -c $<
+endef
+
+%.o: %.S $(CC_VARS)
+	$(run-cc)
+
+%.o: %.c $(CC_VARS)
+	$(run-cc)
+
+hello.o memory.o outc.o: CFLAGS += $(MINILIB_INC)
+
+LD_VARS := LD_VARS.var $(CC_VARS) LDFLAGS.var
+%: %.o $(COMMON) $(LD_VARS)
+	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) $(LDFLAGS) -o $@ $(filter-out %.var,$^)
+
+hello memory: $(MINILIB_OBJS)
+memory: CFLAGS += -DCHECK_UNALIGNED=0 -DMEM_PAGE_SIZE=1024
+
+$(addprefix run-,$(MSP430_TESTS)): run-%: %
+	$(call run-test,$@,$(QEMU) -monitor none -display none \
+	    -chardev file$(COMMA)path=$<.out$(COMMA)id=output \
+	    $(QEMU_OPTS) $< 2>&1 | tappy)
+
+-include $(DEPS)
