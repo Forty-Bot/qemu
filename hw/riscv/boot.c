@@ -158,7 +158,7 @@ target_ulong riscv_load_firmware(const char *firmware_filename,
 
     if (load_elf_ram_sym(firmware_filename, NULL, NULL, NULL,
                          &firmware_entry, NULL, &firmware_end, NULL,
-                         0, EM_RISCV, 1, 0, NULL, true, sym_cb) > 0) {
+                         0, EM_RISCV, 1, 0, NULL, true, sym_cb, NULL) > 0) {
         return firmware_end;
     }
 
@@ -235,7 +235,7 @@ target_ulong riscv_load_kernel(MachineState *machine,
      */
     if (load_elf_ram_sym(kernel_filename, NULL, NULL, NULL,
                          NULL, &kernel_load_base, NULL, NULL, 0,
-                         EM_RISCV, 1, 0, NULL, true, sym_cb) > 0) {
+                         EM_RISCV, 1, 0, NULL, true, sym_cb, NULL) > 0) {
         kernel_entry = kernel_load_base;
         goto out;
     }

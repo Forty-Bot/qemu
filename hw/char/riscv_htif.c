@@ -60,8 +60,8 @@ uint8_t line_size = 16;
 
 static uint64_t fromhost_addr, tohost_addr, begin_sig_addr, end_sig_addr;
 
-void htif_symbol_callback(const char *st_name, int st_info, uint64_t st_value,
-                          uint64_t st_size)
+void htif_symbol_callback(void *opaque, const char *st_name, int st_info,
+                          uint64_t st_value, uint64_t st_size)
 {
     if (strcmp("fromhost", st_name) == 0) {
         fromhost_addr = st_value;
