@@ -1185,6 +1185,7 @@ fi
 : ${cross_prefix_mips64="mips64-linux-gnuabi64-"}
 : ${cross_prefix_mipsel="mipsel-linux-gnu-"}
 : ${cross_prefix_mips="mips-linux-gnu-"}
+: ${cross_prefix_msp430="msp430-elf-"}
 : ${cross_prefix_nios2="nios2-linux-gnu-"}
 : ${cross_prefix_ppc="powerpc-linux-gnu-"}
 : ${cross_prefix_ppc64="powerpc64-linux-gnu-"}

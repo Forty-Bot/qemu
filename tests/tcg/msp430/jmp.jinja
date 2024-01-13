@@ -1,0 +1,279 @@
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2024 Sean Anderson <seanga2@gmail.com>
+
+#include <msp430.h>
+
+{% from "macros.jinja" import check, no_setup, set_carry, clear_carry -%}
+{% from "macros.jinja" import set_attrs, test_mode -%}
+{% from "macros.jinja" import check_helpers, main -%}
+
+{{ check_helpers }}
+
+do_check_jcond:
+    ; assuming exp = 0x1234
+    ; r12 = 0x0403
+    ; r13 = 0x0102
+    mov.b r12, r14
+    mov.b r13, r15
+    swpb r12
+    swpb r15
+    and.b #-1, r12
+    and #0xff00, r13
+    ; r12 = 0x0004
+    ; r13 = 0x0100
+    ; r14 = 0x0003
+    ; r15 = 0x0200
+    bis r15, r12
+    bis r14, r13
+    rla r13
+    rla r13
+    rla r13
+    rla r13
+    bis r13, r12
+    clr r2
+    jump #do_check
+
+    .section .rodata
+branch_str:
+    .asciz "branch not taken"
+
+.text
+{% macro test_jump(jcond, exp) %}
+test_{{ test_id() }}:
+    mov #0, r2
+    mov #0, r12
+    mov #0, r13
+    {{ jcond }} 1f
+2:  setc { {{ jcond }} 2f
+3:  setz { {{ jcond }} 3f
+4:  clrc { {{ jcond }} 4f
+5:
+    swpb r12
+    setn { {{ jcond }} 5f
+6:  setc { {{ jcond }} 6f
+7:  clrz { {{ jcond }} 7f
+8:  clrc { {{ jcond }} 8f
+9:
+    bis #V, r2
+    {{ jcond }} 9f
+10: setc { {{ jcond }} 10f
+11: setz { {{ jcond }} 11f
+12: clrc { {{ jcond }} 12f
+13:
+    swpb r13
+    clrn { {{ jcond }} 13f
+14: setc { {{ jcond }} 14f
+15: clrz { {{ jcond }} 15f
+16: clrc { {{ jcond }} 16f
+    jmp 17f
+1:  bis #1, r12 { jmp 2b  ;
+2:  bis #2, r12 { jmp 3b  ;       C
+3:  bis #8, r12 { jmp 4b  ;     Z C
+4:  bis #4, r12 { jmp 5b  ;     Z
+5:  bis #4, r12 { jmp 6b  ;   N Z
+6:  bis #8, r12 { jmp 7b  ;   N Z C
+7:  bis #2, r12 { jmp 8b  ;   N   C
+8:  bis #1, r12 { jmp 9b  ; V N
+9:  bis #1, r13 { jmp 10b ; V N   C
+10: bis #2, r13 { jmp 11b ; V N Z C
+11: bis #8, r13 { jmp 12b ; V N Z
+12: bis #4, r13 { jmp 13b ; V   Z
+13: bis #4, r13 { jmp 14b ; V   Z C
+14: bis #8, r13 { jmp 15b ; V     C
+15: bis #2, r13 { jmp 16b ; V
+16: bis #1, r13
+17:
+    mov #{{ exp }}, r6
+    call #do_check_jcond
+{% endmacro -%}
+
+{% macro jump_nop_direct(insn) %}
+    {{ insn }} r4, r0
+{%- endmacro -%}
+{{ set_attrs(jump_nop_direct, True) -}}
+
+{% macro jump_nop_indexed(insn, base) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, test_src - {{ base }}
+    mov r4, &test_src
+1:
+    mov #1000, r13
+    {{ insn }} {{ base }}(r13), r0
+{%- endmacro -%}
+{{ set_attrs(jump_nop_indexed) -}}
+
+{% macro jump_nop_indirect(insn) %}
+    mov #test_src, r13
+    mov r4, &test_src
+    {{ insn }} @r13, r0
+{%- endmacro -%}
+{{ set_attrs(jump_nop_indirect) -}}
+
+{% macro jump_nop_autoincrement(insn) %}
+    mov r4, &test_src
+    mov #test_src, r13
+    {{ insn }} @r13+, r0
+{%- endmacro -%}
+{{ set_attrs(jump_nop_autoincrement, autoincrement=True) -}}
+
+{% macro jump_nop_symbolic(insn) %}
+    mov r4, &test_src
+    {{ insn }} test_src, r0
+{%- endmacro -%}
+{{ set_attrs(jump_nop_symbolic) -}}
+
+{% macro jump_nop_immediate(insn, arg) %}
+    {{ insn }} #arg, r0
+{%- endmacro -%}
+{{ set_attrs(jump_nop_immediate) -}}
+
+{% macro jump_nop_absolute(insn) %}
+    mov r4, &test_src
+    {{ insn }} &test_src, r0
+{%- endmacro -%}
+{{ set_attrs(jump_nop_absolute) -}}
+
+{% macro checkj(direct, incr) %}
+    clr r12
+    clr r2
+{{ check(direct, incr) }}
+{%- endmacro -%}
+
+{% macro test_jump_nops(insn, arg, setup=no_setup, incr=2, base=0x1234) %}
+    mov #{{ arg }}, r4
+
+{% for mode in (
+    jump_nop_direct, jump_nop_indexed, jump_nop_indirect,
+    jump_nop_autoincrement, jump_nop_symbolic, jump_nop_absolute,
+) %}
+{% set args = { 'arg': arg, 'base': base } %}
+{{ test_mode(mode, insn, checkj, setup, incr, **(args | selectkeys(mode.arguments))) }}
+{% endfor %}
+{%- endmacro -%}
+
+{% macro branch_mov(target) %}
+    .reloc 1f + 2, R_MSP430_16_BYTE, {{ target }}
+1:
+    mov #1000, r0
+{%- endmacro -%}
+
+{% macro branch_add(target, insn, setup=no_setup) %}
+    .reloc 1f + 2, R_MSP430_GNU_SUB_ULEB128, 1f + 4
+    .reloc 1f + 2, R_MSP430_16_BYTE, {{ target }}
+{{ setup() }}
+1:
+    {{ insn }} #1000, r0
+{%- endmacro -%}
+
+{% macro branch_sub(target, insn, setup=no_setup, off=0) %}
+{{ setup() }}
+    .reloc 3f + 2, R_MSP430_GNU_SUB_ULEB128, {{ target }}
+    .reloc 3f + 2, R_MSP430_16_BYTE, 3f + 4 + {{ off }}
+3:
+    {{ insn }} #1000, r0
+{%- endmacro -%}
+
+{% macro test_branch(branch) %}
+; {{ branch.name }} {{ varargs }}
+test_{{ test_id() }}:
+    push #5f
+{{ branch("4f", *varargs) }}
+    mov #branch_str, r12
+    br #fail
+4: 
+    br #pass
+5:
+test_{{ test_id() }}:
+    push #6f
+{{ branch("4b", *varargs) }}
+    mov #branch_str, r12
+    br #fail
+6:
+{%- endmacro -%}
+
+{% call main() %}
+; Sanity check
+test_{{ test_id() }}:
+    mov #0x1234, r6
+    mov #0, r7
+    mov #0x0403, r12
+    mov #0x0102, r13
+    call #do_check_jcond
+
+{#                    C-C-C-C-C-C-C-C- -#}
+{#                    ZZ--ZZ--ZZ--ZZ-- -#}
+{#                    NNNN----NNNN---- -#}
+{#                    VVVVVVVV-------- -#}
+{{ test_jump("jz",  0b1100110011001100) }} {#- Z=1 #}
+{{ test_jump("jnz", 0b0011001100110011) }} {#- Z=0 #}
+{{ test_jump("jc",  0b1010101010101010) }} {#- C=1 #}
+{{ test_jump("jnc", 0b0101010101010101) }} {#- C=0 #}
+{{ test_jump("jn",  0b1111000011110000) }} {#- N=1 #}
+{{ test_jump("jge", 0b1111000000001111) }} {#- N^V=0 #}
+{{ test_jump("jl",  0b0000111111110000) }} {#- N^V=1 #}
+{{ test_jump("jmp", 0b1111111111111111) }} {#- 1 #}
+
+; Test max-range jumps
+; gas will convert the `jmp`s to `br`s if the displacement is too large (whoops)
+.section .rodata
+1:
+    .asciz "max-range jump failed"
+
+.text
+test_{{ test_id() }}:
+    mov #pass, r4
+    mov #fail, r5
+    mov #1b, r12
+    push #3f
+    jmp 2f
+1:
+    br r4
+{% for _ in range(510) %}
+    br r5
+{% endfor %}
+2:
+    jmp 1b
+3:
+
+; And now for some NOP jumps
+; Ideally we would test flags as well, along with byte variants and one-ops
+; But that is a bit too complex, since all the flags (except Z) may change
+; depending on where we get linked to
+    clr r6
+    clr r7
+{{ test_jump_nops("add", 0) }}
+{{ test_jump_nops("add", 1) }}
+{{ test_jump_nops("addc", 0, clear_carry) }}
+{{ test_jump_nops("addc", 1, clear_carry) }}
+{{ test_jump_nops("addc", 0, set_carry) }}
+{{ test_jump_nops("dadd", 0, clear_carry) }}
+{{ test_jump_nops("dadd", 1, clear_carry) }}
+{{ test_jump_nops("dadd", 0, set_carry) }}
+
+{{ test_jump_nops("sub", 0) }}
+{{ test_jump_nops("subc", 0, set_carry) }}
+{{ test_jump_nops("cmp", 0) }}
+{{ test_jump_nops("cmp", 0xffff) }}
+{{ test_jump_nops("cmp", 0x5678) }}
+
+{{ test_jump_nops("and", 0xffff) }}
+{{ test_jump_nops("and", 0xfffe) }}
+{{ test_jump_nops("bit", 0) }}
+{{ test_jump_nops("bit", 0xffff) }}
+{{ test_jump_nops("xor", 0) }}
+{{ test_jump_nops("xor", 1) }}
+{{ test_jump_nops("bis", 0) }}
+{{ test_jump_nops("bis", 1) }}
+{{ test_jump_nops("bic", 0) }}
+{{ test_jump_nops("bic", 1) }}
+
+; OK now for some (small) relative jumps
+{{ test_branch(branch_mov) }}
+
+{{ test_branch(branch_add, "add") }}
+{{ test_branch(branch_add, "addc", clear_carry) }}
+{{ test_branch(branch_add, "addc", set_carry) }}
+
+{{ test_branch(branch_sub, "sub") }}
+{{ test_branch(branch_sub, "subc", set_carry) }}
+{{ test_branch(branch_sub, "subc", clear_carry, -1) }}
+{%- endcall %}

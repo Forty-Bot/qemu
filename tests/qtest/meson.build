@@ -151,6 +151,8 @@ qtests_mipsel = qtests_mips
 qtests_mips64 = qtests_mips
 qtests_mips64el = qtests_mips
 
+qtests_msp430 = [ 'boot-serial-test' ]
+
 qtests_ppc = \
   qtests_filter + \
   (config_all_devices.has_key('CONFIG_ISA_TESTDEV') ? ['endianness-test'] : []) +            \
