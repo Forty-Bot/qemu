@@ -133,6 +133,7 @@ const char *load_elf_strerror(ssize_t error);
  *      is used if nothing is supplied here.
  * @load_rom : Load ELF binary as ROM
  * @sym_cb: Callback function for symbol table entries
+ * @sym_opaque: Passed to @sym_cb
  *
  * Load an ELF file's contents to the emulated system's address space.
  * Clients may optionally specify a callback to perform address
@@ -145,7 +146,7 @@ const char *load_elf_strerror(ssize_t error);
  * If @elf_machine is EM_NONE then the machine type will be read from the
  * ELF header and no checks will be carried out against the machine type.
  */
-typedef void (*symbol_fn_t)(const char *st_name, int st_info,
+typedef void (*symbol_fn_t)(void *opaque, const char *st_name, int st_info,
                             uint64_t st_value, uint64_t st_size);
 
 ssize_t load_elf_ram_sym(const char *filename,
@@ -155,7 +156,8 @@ ssize_t load_elf_ram_sym(const char *filename,
                          uint64_t *lowaddr, uint64_t *highaddr,
                          uint32_t *pflags, int big_endian, int elf_machine,
                          int clear_lsb, int data_swab,
-                         AddressSpace *as, bool load_rom, symbol_fn_t sym_cb);
+                         AddressSpace *as, bool load_rom, symbol_fn_t sym_cb,
+                         void *sym_opaque);
 
 /** load_elf_ram:
  * Same as load_elf_ram_sym(), but doesn't allow the caller to specify a

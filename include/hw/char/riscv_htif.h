@@ -44,8 +44,8 @@ extern const char *sig_file;
 extern uint8_t line_size;
 
 /* HTIF symbol callback */
-void htif_symbol_callback(const char *st_name, int st_info, uint64_t st_value,
-    uint64_t st_size);
+void htif_symbol_callback(void *opaque, const char *st_name, int st_info,
+                          uint64_t st_value, uint64_t st_size);
 
 /* legacy pre qom */
 HTIFState *htif_mm_init(MemoryRegion *address_space, Chardev *chr,

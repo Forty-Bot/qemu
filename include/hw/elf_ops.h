@@ -105,7 +105,7 @@ static int glue(symcmp, SZ)(const void *s0, const void *s1)
 }
 
 static void glue(load_symbols, SZ)(struct elfhdr *ehdr, int fd, int must_swab,
-                                   int clear_lsb, symbol_fn_t sym_cb)
+                                   int clear_lsb, symbol_fn_t sym_cb, void *opaque)
 {
     struct elf_shdr *symtab, *strtab;
     g_autofree struct elf_shdr *shdr_table = NULL;
@@ -154,7 +154,7 @@ static void glue(load_symbols, SZ)(struct elfhdr *ehdr, int fd, int must_swab,
             glue(bswap_sym, SZ)(&syms[i]);
         }
         if (sym_cb) {
-            sym_cb(str + syms[i].st_name, syms[i].st_info,
+            sym_cb(opaque, str + syms[i].st_name, syms[i].st_info,
                    syms[i].st_value, syms[i].st_size);
         }
         /* We are only interested in function symbols.
@@ -321,7 +321,7 @@ static ssize_t glue(load_elf, SZ)(const char *name, int fd,
                                   uint32_t *pflags, int elf_machine,
                                   int clear_lsb, int data_swab,
                                   AddressSpace *as, bool load_rom,
-                                  symbol_fn_t sym_cb)
+                                  symbol_fn_t sym_cb, void *sym_opaque)
 {
     struct elfhdr ehdr;
     struct elf_phdr *phdr = NULL, *ph;
@@ -390,7 +390,7 @@ static ssize_t glue(load_elf, SZ)(const char *name, int fd,
     if (pentry)
         *pentry = (uint64_t)(elf_sword)ehdr.e_entry;
 
-    glue(load_symbols, SZ)(&ehdr, fd, must_swab, clear_lsb, sym_cb);
+    glue(load_symbols, SZ)(&ehdr, fd, must_swab, clear_lsb, sym_cb, sym_opaque);
 
     size = ehdr.e_phnum * sizeof(phdr[0]);
     if (lseek(fd, ehdr.e_phoff, SEEK_SET) != ehdr.e_phoff) {

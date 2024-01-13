@@ -444,7 +444,7 @@ ssize_t load_elf_ram(const char *filename,
                             translate_fn, translate_opaque,
                             pentry, lowaddr, highaddr, pflags, big_endian,
                             elf_machine, clear_lsb, data_swab, as,
-                            load_rom, NULL);
+                            load_rom, NULL, NULL);
 }
 
 /* return < 0 if error, otherwise the number of bytes loaded in memory */
@@ -455,7 +455,8 @@ ssize_t load_elf_ram_sym(const char *filename,
                          uint64_t *lowaddr, uint64_t *highaddr,
                          uint32_t *pflags, int big_endian, int elf_machine,
                          int clear_lsb, int data_swab,
-                         AddressSpace *as, bool load_rom, symbol_fn_t sym_cb)
+                         AddressSpace *as, bool load_rom, symbol_fn_t sym_cb,
+                         void *sym_opaque)
 {
     int fd, data_order, target_data_order, must_swab;
     ssize_t ret = ELF_LOAD_FAILED;
@@ -497,12 +498,14 @@ ssize_t load_elf_ram_sym(const char *filename,
         ret = load_elf64(filename, fd, elf_note_fn,
                          translate_fn, translate_opaque, must_swab,
                          pentry, lowaddr, highaddr, pflags, elf_machine,
-                         clear_lsb, data_swab, as, load_rom, sym_cb);
+                         clear_lsb, data_swab, as, load_rom, sym_cb,
+                         sym_opaque);
     } else {
         ret = load_elf32(filename, fd, elf_note_fn,
                          translate_fn, translate_opaque, must_swab,
                          pentry, lowaddr, highaddr, pflags, elf_machine,
-                         clear_lsb, data_swab, as, load_rom, sym_cb);
+                         clear_lsb, data_swab, as, load_rom, sym_cb,
+                         sym_opaque);
     }
 
     if (ret != ELF_LOAD_FAILED) {
