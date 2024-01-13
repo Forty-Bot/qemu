@@ -1,0 +1,80 @@
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2024 Sean Anderson <seanga2@gmail.com>
+
+#include <msp430.h>
+
+{% from "macros.jinja" import main -%}
+
+.data
+.balign 2
+saved_sp:
+    .skip 2
+
+.text
+{% call main() %}
+test_{{ test_id() }}:
+    mov r1, &saved_sp
+    mov #0x1110, r1
+    mov #0x0000, r2
+    mov #0x4444, r4
+    mov #0x5555, r5
+    mov #0x6666, r6
+    mov #0x7777, r7
+    mov #0x8888, r8
+    mov #0x9999, r9
+    mov #0xaaaa, r10
+    mov #0xbbbb, r11
+    mov #0xcccc, r12
+    mov #0xdddd, r13
+    mov #0xeeee, r14
+    mov #0xffff, r15
+
+    ; two-operand instructions
+    ; done with arithmetic to avoid getting the assembler confused
+{% for base in (0x4000, 0x8000, 0xc000) %}
+{% for i in range(0x400) %}
+    .dc {{ base + i * 16 + 3 }}
+{% endfor %}
+{% endfor %}
+
+    ; one-operand instructions
+{% for val in (0, 1, 2, 4, 8, -1) %}
+    rrc #{{ val }}
+    rrc.b #{{ val }}
+    rra #{{ val }}
+    rra.b #{{ val }}
+    swpb #{{ val }}
+    sxt #{{ val }}
+{% endfor %}
+
+    cmp #0x0000, r2  { jne 2f
+    cmp #0x1110, r1  { jne 2f
+    cmp #0x4444, r4  { jne 2f
+    cmp #0x5555, r5  { jne 2f
+    cmp #0x6666, r6  { jne 2f
+    cmp #0x7777, r7  { jne 2f
+    cmp #0x8888, r8  { jne 2f
+    cmp #0x9999, r9  { jne 2f
+    cmp #0xaaaa, r10 { jne 2f
+    cmp #0xbbbb, r11 { jne 2f
+    cmp #0xcccc, r12 { jne 2f
+    cmp #0xdddd, r13 { jne 2f
+    cmp #0xeeee, r14 { jne 2f
+    cmp #0xffff, r15 { jne 2f
+
+    mov &saved_sp, r1
+    call #pass
+    jmp 3f
+
+.section .rodata
+1:
+    .asciz "nop modified a register"
+
+.text
+2:
+    mov &saved_sp, r1
+    mov 1b, r12
+    call #fail
+
+3:
+{%- endcall %}

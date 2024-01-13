@@ -38,6 +38,7 @@ static struct arch2cpu cpus_map[] = {
     { "mipsel", "I7200" },
     { "mips64", "20Kc" },
     { "mips64el", "I6500" },
+    { "msp430", "msp430-cpu", },
     { "or1k", "or1200" },
     { "ppc", "604" },
     { "ppc64", "power8e_v2.1" },
