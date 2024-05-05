@@ -11,6 +11,9 @@ config ARMSSE_MHU
 config ARMSSE_CPU_PWRCTRL
     bool
 
+config CLK_GPIO
+    bool
+
 config ISA_DEBUG
     bool
     depends on ISA_BUS
