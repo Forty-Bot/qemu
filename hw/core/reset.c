@@ -172,8 +172,19 @@ void qemu_unregister_resettable(Object *obj)
 
 void qemu_devices_reset(ShutdownCause reason)
 {
-    ResetType type = (reason == SHUTDOWN_CAUSE_SNAPSHOT_LOAD) ?
-        RESET_TYPE_SNAPSHOT_LOAD : RESET_TYPE_COLD;
+    ResetType type;
+
+    switch (reason) {
+    case SHUTDOWN_CAUSE_SNAPSHOT_LOAD:
+        type = RESET_TYPE_SNAPSHOT_LOAD;
+        break;
+    case SHUTDOWN_CAUSE_GUEST_RESET:
+        type = RESET_TYPE_GUEST;
+        break;
+    default:
+        type = RESET_TYPE_COLD;
+        break;
+    }
 
     /* Reset the simulation */
     resettable_reset(OBJECT(get_root_reset_container()), type);
