@@ -185,7 +185,7 @@ static bool read_test_data_u16(int offset)
     int i;
     const int max = (TEST_SIZE - offset) / sizeof(word);
 
-    ml_printf("Reading u16 from %#lx (offset %d):", ptr, offset);
+    ml_printf("Reading u16 from 0x%p (offset %d):", ptr, offset);
 
     for (i = 0; i < max; i++) {
         uint8_t high, low;
@@ -210,7 +210,7 @@ static bool read_test_data_u32(int offset)
     int i;
     const int max = (TEST_SIZE - offset) / sizeof(word);
 
-    ml_printf("Reading u32 from %#lx (offset %d):", ptr, offset);
+    ml_printf("Reading u32 from 0x%p (offset %d):", ptr, offset);
 
     for (i = 0; i < max; i++) {
         uint8_t b1, b2, b3, b4;
@@ -251,7 +251,7 @@ static bool read_test_data_u64(int offset)
     int i;
     const int max = (TEST_SIZE - offset) / sizeof(word);
 
-    ml_printf("Reading u64 from %#lx (offset %d):", ptr, offset);
+    ml_printf("Reading u64 from 0x%p (offset %d):", ptr, offset);
 
     for (i = 0; i < max; i++) {
         uint8_t b1, b2, b3, b4, b5, b6, b7, b8;
@@ -350,7 +350,7 @@ static bool read_test_data_s8(int offset, bool neg_first)
     int i;
     const int max = (TEST_SIZE - offset) / 2;
 
-    ml_printf("Reading s8 pairs from %#lx (offset %d):", ptr, offset);
+    ml_printf("Reading s8 pairs from 0x%p (offset %d):", ptr, offset);
 
     for (i = 0; i < max; i++) {
         int16_t first, second;
@@ -376,7 +376,7 @@ static bool read_test_data_s16(int offset, bool neg_first)
     int i;
     const int max = (TEST_SIZE - offset) / (sizeof(*ptr));
 
-    ml_printf("Reading s16 from %#lx (offset %d, %s):", ptr,
+    ml_printf("Reading s16 from 0x%p (offset %d, %s):", ptr,
               offset, neg_first ? "neg" : "pos");
 
     /*
@@ -395,7 +395,7 @@ static bool read_test_data_s16(int offset, bool neg_first)
         } else if (!neg_first && data > 0) {
             pdot(i);
         } else {
-            ml_printf("Error %d %c 0\n", data, neg_first ? '<' : '>');
+            ml_printf("Error %d %c 0\n", (int)data, neg_first ? '<' : '>');
             return false;
         }
     }
@@ -409,7 +409,7 @@ static bool read_test_data_s32(int offset, bool neg_first)
     int i;
     const int max = (TEST_SIZE - offset) / (sizeof(int32_t));
 
-    ml_printf("Reading s32 from %#lx (offset %d, %s):",
+    ml_printf("Reading s32 from 0x%p (offset %d, %s):",
               ptr, offset, neg_first ? "neg" : "pos");
 
     /*
@@ -428,7 +428,7 @@ static bool read_test_data_s32(int offset, bool neg_first)
         } else if (!neg_first && data > 0) {
             pdot(i);
         } else {
-            ml_printf("Error %d %c 0\n", data, neg_first ? '<' : '>');
+            ml_printf("Error %d %c 0\n", (int)data, neg_first ? '<' : '>');
             return false;
         }
     }
