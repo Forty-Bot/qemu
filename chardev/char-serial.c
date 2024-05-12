@@ -74,6 +74,7 @@ static void tty_serial_init(int fd, int speed,
     }
 
     speed = speed * 10 / 11;
+    check_speed(0);
     check_speed(50);
     check_speed(75);
     check_speed(110);
