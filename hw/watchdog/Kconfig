@@ -2,6 +2,9 @@ config CMSDK_APB_WATCHDOG
     bool
     select PTIMER
 
+config MSP430_WDT
+    bool
+
 config WDT_IB6300ESB
     bool
     default y if PCI_DEVICES
