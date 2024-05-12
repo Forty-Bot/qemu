@@ -470,11 +470,14 @@ init_ufn init_ufns[] = { init_test_data_u8,
                          init_test_data_u16,
                          init_test_data_u32,
                          init_test_data_u64 };
+#include <msp430.h>
 
 int main(void)
 {
     int i;
     bool ok = true;
+
+    WDTCTL = WDTPW | WDTHOLD;
 
     /* Run through the unsigned tests first */
     for (i = 0; i < ARRAY_SIZE(init_ufns) && ok; i++) {
