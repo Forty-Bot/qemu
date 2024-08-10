@@ -852,6 +852,10 @@ static inline void qdev_init_gpio_in_named(DeviceState *dev,
  *
  * To users of the container device, the GPIO array created on @container
  * behaves exactly like any other.
+ *
+ * This function may be called with the same values of @container and @name
+ * multiple times. Subsequent invocations will extend the existing GPIO array
+ * on @container with the GPIOs from @device.
  */
 void qdev_pass_gpios(DeviceState *dev, DeviceState *container,
                      const char *name);

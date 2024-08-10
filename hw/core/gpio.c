@@ -175,24 +175,37 @@ void qdev_pass_gpios(DeviceState *dev, DeviceState *container,
                      const char *name)
 {
     int i;
-    NamedGPIOList *ngl = qdev_get_named_gpio_list(dev, name);
+    NamedGPIOList *cont_ngl = qdev_get_named_gpio_list(container, name);
+    NamedGPIOList *dev_ngl = qdev_get_named_gpio_list(dev, name);
 
-    for (i = 0; i < ngl->num_in; i++) {
-        const char *nm = ngl->name ? ngl->name : "unnamed-gpio-in";
-        char *propname = g_strdup_printf("%s[%d]", nm, i);
+    for (i = 0; i < dev_ngl->num_in; i++) {
+        const char *nm = name ? name : "unnamed-gpio-in";
+        char *cont_name = g_strdup_printf("%s[%d]", nm, cont_ngl->num_in + i);
+        char *dev_name = g_strdup_printf("%s[%d]", nm, i);
 
-        object_property_add_alias(OBJECT(container), propname,
-                                  OBJECT(dev), propname);
-        g_free(propname);
+        object_property_add_alias(OBJECT(container), cont_name,
+                                  OBJECT(dev), dev_name);
+        g_free(cont_name);
+        g_free(dev_name);
     }
-    for (i = 0; i < ngl->num_out; i++) {
-        const char *nm = ngl->name ? ngl->name : "unnamed-gpio-out";
-        char *propname = g_strdup_printf("%s[%d]", nm, i);
+    for (i = 0; i < dev_ngl->num_out; i++) {
+        const char *nm = name ? name : "unnamed-gpio-out";
+        char *cont_name = g_strdup_printf("%s[%d]", nm, cont_ngl->num_out + i);
+        char *dev_name = g_strdup_printf("%s[%d]", nm, i);
 
-        object_property_add_alias(OBJECT(container), propname,
-                                  OBJECT(dev), propname);
-        g_free(propname);
+        object_property_add_alias(OBJECT(container), cont_name,
+                                  OBJECT(dev), dev_name);
+        g_free(cont_name);
+        g_free(dev_name);
     }
-    QLIST_REMOVE(ngl, node);
-    QLIST_INSERT_HEAD(&container->gpios, ngl, node);
+
+    cont_ngl->in = g_renew(qemu_irq, cont_ngl->in,
+                           cont_ngl->num_in + dev_ngl->num_in);
+    memcpy(&cont_ngl->in[cont_ngl->num_in], dev_ngl->in,
+           dev_ngl->num_in * sizeof(qemu_irq));
+    cont_ngl->num_in += dev_ngl->num_in;
+    cont_ngl->num_out += dev_ngl->num_out;
+
+    QLIST_REMOVE(dev_ngl, node);
+    g_free(dev_ngl);
 }
