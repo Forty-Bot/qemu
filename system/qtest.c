@@ -225,12 +225,13 @@ static void *qtest_server_send_opaque;
  * QOM-PATH.  When the pin is triggered, one of the following async messages
  * will be printed to the qtest stream::
  *
- *  IRQ raise NUM
- *  IRQ lower NUM
+ *  IRQ raise NUM LEVEL
+ *  IRQ lower NUM LEVEL
  *
- * where NUM is an IRQ number.  For the PC, interrupts can be intercepted
- * simply with "irq_intercept_in ioapic" (note that IRQ0 comes out with
- * NUM=0 even though it is remapped to GSI 2).
+ * where NUM is an IRQ number and LEVEL is the level passed to qemu_set_irq.
+ * Note that LEVEL will always be 0 for "lower" messages. For the PC,
+ * interrupts can be intercepted simply with "irq_intercept_in ioapic" (note
+ * that IRQ0 comes out with NUM=0 even though it is remapped to GSI 2).
  *
  * Setting interrupt level:
  * """"""""""""""""""""""""
@@ -320,8 +321,8 @@ static void qtest_irq_handler(void *opaque, int n, int level)
         CharBackend *chr = &qtest->qtest_chr;
         irq_levels[n] = level;
         qtest_send_prefix(chr);
-        qtest_sendf(chr, "IRQ %s %d\n",
-                    level ? "raise" : "lower", n);
+        qtest_sendf(chr, "IRQ %s %d %d\n",
+                    level ? "raise" : "lower", n, level);
     }
 }
 

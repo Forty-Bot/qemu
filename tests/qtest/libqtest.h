@@ -362,7 +362,7 @@ void qtest_module_load(QTestState *s, const char *prefix, const char *libname);
  *
  * Returns: The level of the @num interrupt.
  */
-bool qtest_get_irq(QTestState *s, int num);
+int qtest_get_irq(QTestState *s, int num);
 
 /**
  * qtest_irq_intercept_in:

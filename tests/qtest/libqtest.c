@@ -81,7 +81,7 @@ struct QTestState
 #endif
     int expected_status;
     bool big_endian;
-    bool irq_level[MAX_IRQ];
+    int irq_level[MAX_IRQ];
     GString *rx;
     QTestTransportOps ops;
     GList *pending_events;
@@ -497,7 +497,7 @@ static QTestState *qtest_init_internal(const char *qemu_bin,
 
     s->rx = g_string_new("");
     for (i = 0; i < MAX_IRQ; i++) {
-        s->irq_level[i] = false;
+        s->irq_level[i] = 0;
     }
 
     /*
@@ -678,21 +678,21 @@ redo:
 
     if (strcmp(words[0], "IRQ") == 0) {
         long irq;
+        int level;
         int ret;
 
         g_assert(words[1] != NULL);
         g_assert(words[2] != NULL);
+        g_assert(words[3] != NULL);
 
         ret = qemu_strtol(words[2], NULL, 0, &irq);
         g_assert(!ret);
         g_assert_cmpint(irq, >=, 0);
         g_assert_cmpint(irq, <, MAX_IRQ);
 
-        if (strcmp(words[1], "raise") == 0) {
-            s->irq_level[irq] = true;
-        } else {
-            s->irq_level[irq] = false;
-        }
+        ret = qemu_strtoi(words[3], NULL, 0, &level);
+        g_assert(!ret);
+        s->irq_level[irq] = level;
 
         g_strfreev(words);
         goto redo;
@@ -972,7 +972,7 @@ bool qtest_has_accel(const char *accel_name)
     return false;
 }
 
-bool qtest_get_irq(QTestState *s, int num)
+int qtest_get_irq(QTestState *s, int num)
 {
     /* dummy operation in order to make sure irq is up to date */
     qtest_inb(s, 0);
@@ -1798,7 +1798,7 @@ QTestState *qtest_inproc_init(QTestState **s, bool log, const char* arch,
     *s = qts; /* Expose qts early on, since the query endianness relies on it */
     qts->wstatus = 0;
     for (int i = 0; i < MAX_IRQ; i++) {
-        qts->irq_level[i] = false;
+        qts->irq_level[i] = 0;
     }
 
     qtest_client_set_rx_handler(qts, qtest_client_inproc_recv_line);
